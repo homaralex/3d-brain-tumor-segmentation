@@ -112,9 +112,13 @@ def train(args):
     train_loss = tf.keras.metrics.Mean(name='train_loss')
     train_macro_dice = tf.keras.metrics.Mean(name='train_macro_dice')
     train_micro_dice = tf.keras.metrics.Mean(name='train_micro_dice')
+    train_kld = tf.keras.metrics.Mean(name='train_kld')
+    train_rec = tf.keras.metrics.Mean(name='train_rec')
     val_loss = tf.keras.metrics.Mean(name='val_loss')
     val_macro_dice = tf.keras.metrics.Mean(name='val_macro_dice')
     val_micro_dice = tf.keras.metrics.Mean(name='val_micro_dice')
+    val_kld = tf.keras.metrics.Mean(name='val_kld')
+    val_rec = tf.keras.metrics.Mean(name='val_rec')
 
     # Set up logging.
     if args.save_folder:
@@ -132,6 +136,15 @@ def train(args):
     wandb_project = args.wandb_project
     if wandb_project is not None:
         wandb.init(project=wandb_project, config=vars(args))
+
+        wandb_data, _ = prepare_dataset(
+            args.val_loc,
+            args.batch_size,
+            args.prepro_size,
+            args.crop_size,
+            args.model_args['out_ch'],
+            shuffle=False,
+            data_format=args.data_format)
 
     best_val_dice = 0.0
     patience = 0
@@ -153,6 +166,8 @@ def train(args):
                     loss += tf.reduce_sum(model.losses)
 
                 macro_dice, micro_dice = dice_fn(y, y_pred)
+                l2_loss = tf.reduce_mean((x - y_vae) ** 2)
+                kld_loss = tf.reduce_mean(z_mean ** 2 + tf.math.exp(z_logvar) - z_logvar - 1.0)
 
                 # Gradients and backward.
                 grads = tape.gradient(loss, model.trainable_variables)
@@ -160,6 +175,8 @@ def train(args):
 
                 # Update logs.
                 train_loss.update_state(loss)
+                train_kld.update_state(kld_loss)
+                train_rec.update_state(l2_loss)
                 train_macro_dice.update_state(macro_dice)
                 train_micro_dice.update_state(micro_dice)
 
@@ -177,8 +194,12 @@ def train(args):
                 loss += tf.reduce_sum(model.losses)
 
                 macro_dice, micro_dice = dice_fn(y, y_pred)
+                l2_loss = tf.reduce_mean((x - y_vae) ** 2)
+                kld_loss = tf.reduce_mean(z_mean ** 2 + tf.math.exp(z_logvar) - z_logvar - 1.0)
 
                 val_loss.update_state(loss)
+                val_rec.update_state(l2_loss)
+                val_kld.update_state(kld_loss)
                 val_macro_dice.update_state(macro_dice)
                 val_micro_dice.update_state(micro_dice)
 
@@ -205,15 +226,19 @@ def train(args):
                 'epoch': epoch,
                 'lr': optimizer.learning_rate.numpy(),
                 'train_loss': train_loss.result().numpy(),
+                'train_kld': train_kld.result().numpy(),
+                'train_rec': train_rec.result().numpy(),
                 'train_macro_dice': train_macro_dice.result().numpy(),
                 'train_micro_dice': train_micro_dice.result().numpy(),
                 'val_loss': val_loss.result().numpy(),
+                'val_kld': val_kld.result().numpy(),
+                'val_rec': val_rec.result().numpy(),
                 'val_macro_dice': val_macro_dice.result().numpy(),
                 'val_micro_dice': val_micro_dice.result().numpy(),
             })
 
             segs, recs = [], []
-            for x, y in train_data:
+            for x, y in wandb_data:
                 if len(segs) >= 4:
                     break
 
@@ -269,9 +294,13 @@ def train(args):
 
         # Reset statistics.
         train_loss.reset_states()
+        train_kld.reset_states()
+        train_rec.reset_states()
         train_macro_dice.reset_states()
         train_micro_dice.reset_states()
         val_loss.reset_states()
+        val_kld.reset_states()
+        val_rec.reset_states()
         val_macro_dice.reset_states()
         val_micro_dice.reset_states()
 
