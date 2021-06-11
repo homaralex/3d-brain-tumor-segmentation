@@ -100,6 +100,8 @@ class TrainArgParser(BaseArgParser):
                 help='Output folder to save checkpoints, logs, and configs.')
         self.parser.add_argument('--load_folder', type=str, default='',
                 help='Input folder to load checkpoints and configs to resume training.')
+        self.parser.add_argument('--wandb_project', type=str, default=None,
+                help='')
 
         # Training args.
         self.parser.add_argument('--lr', type=float, default=1e-4,

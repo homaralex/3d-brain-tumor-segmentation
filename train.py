@@ -56,8 +56,7 @@ def prepare_dataset(loc, batch_size, prepro_size, crop_size, out_ch, shuffle=Tru
         'x': tf.io.FixedLenFeature([h * w * d * c], tf.float32),
         'y': tf.io.FixedLenFeature([h * w * d * 1], tf.float32)}
 
-    # TODO remove slice
-    files = [os.path.join(loc, f) for f in os.listdir(loc)][:2]
+    files = [os.path.join(loc, f) for f in os.listdir(loc)]
     dataset = tf.data.TFRecordDataset(files)
 
     # Shuffle for training set, else no shuffle for validation set.
@@ -130,8 +129,7 @@ def train(args):
                                'val_micro_dice'])
             f.write(header + '\n')
 
-    # TODO
-    wandb_project = 'test'
+    wandb_project = args.wandb_project
     if wandb_project is not None:
         wandb.init(project=wandb_project, config=vars(args))
 
@@ -201,6 +199,7 @@ def train(args):
                                   str(val_macro_dice.result().numpy()),
                                   str(val_micro_dice.result().numpy())])
                 f.write(entry + '\n')
+
         if wandb_project is not None:
             wandb.log({
                 'epoch': epoch,
@@ -212,6 +211,47 @@ def train(args):
                 'val_macro_dice': val_macro_dice.result().numpy(),
                 'val_micro_dice': val_micro_dice.result().numpy(),
             })
+
+            segs, recs = [], []
+            for x, y in train_data:
+                if len(segs) >= 4:
+                    break
+
+                # take the middle slice
+                slice_idx = x[0].shape[1] // 2
+                if args.data_format == 'channels_first':
+                    seg_orig = y[0][0][slice_idx].numpy()
+                    if seg_orig.sum() == 0:
+                        continue
+
+                    y_pred, y_vae, _, _ = model(x, training=False, inference=False)
+                    rec = y_vae[0][0][slice_idx].numpy()
+                    orig = x[0][slice_idx].numpy()
+                    seg = y_pred[0][0][slice_idx].numpy()
+                else:
+                    seg_orig = y[0][:, :, :, 0][slice_idx].numpy()
+                    if seg_orig.sum() == 0:
+                        continue
+
+                    y_pred, y_vae, z_mean, z_logvar = model(x, training=False, inference=False)
+                    rec = y_vae[0][:, :, :, 0][slice_idx].numpy()
+                    orig = x[0][:, :, :, 0][slice_idx].numpy()
+                    seg = y_pred[0][:, :, :, 0][slice_idx].numpy()
+
+                recs.append(wandb.Image(rec))
+                mask_img = wandb.Image(orig, masks={
+                    "predictions": {
+                        "mask_data": seg,
+                    },
+                    "ground_truth": {
+                        "mask_data": seg_orig,
+                    },
+                })
+                segs.append(mask_img)
+                print(len(segs))
+
+            wandb.log({"reconstructions": recs})
+            wandb.log({"segmentations": segs})
 
         # Checkpoint and patience.
         if val_macro_dice.result() > best_val_dice:
