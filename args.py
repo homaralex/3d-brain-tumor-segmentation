@@ -163,7 +163,7 @@ class TrainArgParser(BaseArgParser):
         args.crop_size = [int(s) for s in args.crop_size]
 
         # Load preprocessed stats.
-        prepro = np.load(args.prepro_loc).item()
+        prepro = np.load(args.prepro_loc, allow_pickle=True).item()
         args.prepro_size = [prepro['size']['h'], prepro['size']['w'], prepro['size']['d'], prepro['size']['c']]
 
         # Check that sizes work out.
@@ -192,7 +192,7 @@ class TrainArgParser(BaseArgParser):
         # Save training args.
         with open(os.path.join(args.save_folder, 'train_args.pkl'), 'wb') as f:
             pickle.dump(self.namespace_to_dict(args), f)
-        
+
         return args
 
 
