@@ -2,6 +2,8 @@
 import os
 import tensorflow as tf
 import numpy as np
+import tensorflow.python.framework.ops
+
 import wandb
 from tqdm import tqdm
 
@@ -101,8 +103,6 @@ def train(args):
     # Load weights if specified.
     if args.load_folder:
         model.load_weights(os.path.join(args.load_folder, 'chkpt.hdf5'))
-    n_params = tf.reduce_sum([tf.reduce_prod(var.shape) for var in model.trainable_variables])
-    print('Total number of parameters: {} m'.format(int(n_params) // 1e6), flush=True)
 
     # Initialize loss and metrics.
     optimizer = ScheduledOptim(learning_rate=args.lr)
@@ -309,4 +309,5 @@ if __name__ == '__main__':
     parser = TrainArgParser()
     args = parser.parse_args()
     print('Train args: {}'.format(args), flush=True)
+    # tensorflow.python.framework.ops.disable_eager_execution()
     train(args)
