@@ -273,7 +273,6 @@ def train(args):
                     },
                 })
                 segs.append(mask_img)
-                print(len(segs))
 
             wandb.log({"reconstructions": recs})
             wandb.log({"segmentations": segs})
