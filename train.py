@@ -251,7 +251,7 @@ def train(args):
 
                     y_pred, y_vae, _, _ = model(x, training=False, inference=False)
                     rec = y_vae[0][0][slice_idx].numpy()
-                    orig = x[0][slice_idx].numpy()
+                    orig = x[0][0][slice_idx].numpy()
                     seg = y_pred[0][0][slice_idx].numpy()
                 else:
                     seg_orig = y[0][:, :, :, 0][slice_idx].numpy()
