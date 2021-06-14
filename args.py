@@ -129,6 +129,8 @@ class TrainArgParser(BaseArgParser):
                 help='Number of spatial levels through the model.')
         self.parser.add_argument('--l2_scale', type=float, dest='model_args.l2_scale', default=1e-5,
                 help='Scale of L2 regularization applied to all kernels.')
+        self.parser.add_argument('--weight_l2', type=float, default=.1)
+        self.parser.add_argument('--weight_kld', type=float, default=.1)
         self.parser.add_argument('--dropout', type=float, dest='model_args.dropout', default=0.2,
                 help='Dropout ratio to apply to input data.')
         self.parser.add_argument('--groups', type=int, dest='model_args.groups', default=8,

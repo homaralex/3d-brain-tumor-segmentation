@@ -106,7 +106,7 @@ def train(args):
 
     # Initialize loss and metrics.
     optimizer = ScheduledOptim(learning_rate=args.lr)
-    loss_fn = DiceVAELoss(data_format=args.data_format)
+    loss_fn = DiceVAELoss(data_format=args.data_format, weight_l2=args.weight_l2, weight_kld=args.weight_kld)
     dice_fn = DiceCoefficient(data_format=args.data_format)
 
     train_loss = tf.keras.metrics.Mean(name='train_loss')
