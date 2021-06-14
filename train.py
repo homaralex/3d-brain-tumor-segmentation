@@ -254,14 +254,16 @@ def train(args):
                     orig = x[0][0][slice_idx].numpy()
                     seg = y_pred[0][0][slice_idx].numpy()
                 else:
-                    seg_orig = y[0][:, :, :, 0][slice_idx].numpy()
+                    seg_orig = y[0][slice_idx].numpy()
                     if seg_orig.sum() == 0:
                         continue
+                    seg_orig = (seg_orig.argmax(axis=-1) + 1) * seg_orig.max(axis=-1)
 
                     y_pred, y_vae, z_mean, z_logvar = model(x, training=False, inference=False)
                     rec = y_vae[0][:, :, :, 0][slice_idx].numpy()
                     orig = x[0][:, :, :, 0][slice_idx].numpy()
-                    seg = y_pred[0][:, :, :, 0][slice_idx].numpy()
+                    seg = y_pred[0][slice_idx].numpy()
+                    seg = (seg.argmax(axis=-1) + 1) * (seg > .5).max(axis=-1)
 
                 recs.append(wandb.Image(rec))
                 mask_img = wandb.Image(orig, masks={
