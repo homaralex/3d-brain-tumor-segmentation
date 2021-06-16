@@ -56,8 +56,8 @@ class DiceCoefficient(object):
 
         # Compute dice score.
         intersection = tf.reduce_sum(y_pred * y_true, axis=dice_axes)
-        pred = tf.reduce_sum(y_pred, axis=dice_axes)
-        true = tf.reduce_sum(y_true, axis=dice_axes)
+        pred = tf.reduce_sum(y_pred ** 2, axis=dice_axes)
+        true = tf.reduce_sum(y_true ** 2, axis=dice_axes)
 
         macroavg = tf.reduce_mean((2.0 * intersection + 1.0) / (pred + true + 1.0))
         microavg = tf.reduce_sum(y_pred * y_true) / (tf.reduce_sum(y_pred) + tf.reduce_sum(y_true))
