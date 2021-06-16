@@ -73,6 +73,7 @@ class ScheduledOptim(tf.keras.optimizers.Adam):
                  beta_1=0.9,
                  beta_2=0.999,
                  epsilon=1e-7,
+                 decay=0.9,
                  amsgrad=False,
                  name='Adam',
                  n_epochs=300,
@@ -87,7 +88,8 @@ class ScheduledOptim(tf.keras.optimizers.Adam):
             **kwargs)
         self.init_lr = tf.constant(learning_rate, dtype=tf.float32)
         self.n_epochs = float(n_epochs)
+        self.decay = decay
 
     def __call__(self, epoch):
-        new_lr = self.init_lr * ((1.0 - epoch / self.n_epochs) ** 0.9)
+        new_lr = self.init_lr * ((1.0 - epoch / self.n_epochs) ** self.decay)
         self._set_hyper('learning_rate', new_lr)

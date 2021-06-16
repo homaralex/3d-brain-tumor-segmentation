@@ -106,6 +106,7 @@ class TrainArgParser(BaseArgParser):
         # Training args.
         self.parser.add_argument('--lr', type=float, default=1e-4,
                 help='Initial learning rate for training.')
+        self.parser.add_argument('--lr_decay', type=float, default=.9)
         self.parser.add_argument('--batch_size', type=int, default=1,
                 help='Batch size to use in training.')
         self.parser.add_argument('--patience', type=int, default=-1,
