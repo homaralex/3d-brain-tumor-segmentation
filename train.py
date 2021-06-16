@@ -105,7 +105,7 @@ def train(args):
         model.load_weights(os.path.join(args.load_folder, 'chkpt.hdf5'))
 
     # Initialize loss and metrics.
-    optimizer = ScheduledOptim(learning_rate=args.lr)
+    optimizer = ScheduledOptim(learning_rate=args.lr, n_epochs=args.n_epochs)
     loss_fn = DiceVAELoss(data_format=args.data_format, weight_l2=args.weight_l2, weight_kld=args.weight_kld)
     dice_fn = DiceCoefficient(data_format=args.data_format)
 
