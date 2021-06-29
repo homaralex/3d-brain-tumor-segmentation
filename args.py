@@ -59,6 +59,8 @@ class PreproArgParser(BaseArgParser):
                 help='Whether to create validation set.')
         self.parser.add_argument('--out_loc', type=str, default='./data',
                 help='Location to write preprocessed data.')
+        self.parser.add_argument('--split', type=int, default=8,
+                help='Ratio of train/val splits')
 
     def parse_args(self):
         args = self.parser.parse_args()

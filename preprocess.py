@@ -104,7 +104,7 @@ def main(args):
     if args.create_val:
         indices = list(range(len(x_train)))
         random.shuffle(indices)
-        split = len(indices) // 11
+        split = len(indices) // args.split
         x_val = x_train[:split]
         y_val = y_train[:split]
         print('{} validation examples.'.format(len(x_val)))
